@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
@@ -17,12 +18,16 @@ namespace SeleniumBot
 
         static void Main(string[] args)
         {
-            string val, val2;
+            string val, val2, movieData;
 
 
             val = "https://www.imdb.com/search/keyword/?mode=detail&page=";
             Console.Write("Enter integer after page=: ");
             val2 = Console.ReadLine();
+            //Console.Write("Movies 1 or not=: ");
+            movieData = "";
+            // movieData = Console.ReadLine();
+
 
 
 
@@ -45,13 +50,15 @@ namespace SeleniumBot
                 pr.lines.Add(line);
             }
             pr.driver = new ChromeDriver();
-            pr.read(i, val, val2, list, restric);
-            pr.finals(list, sheet);
+            pr.read(i, val, val2, list, restric, movieData);
+            pr.finals(list, sheet, movieData);
         }
 
-        private void finals(List<Picture> list, int sheet)
+        private void finals(List<Picture> list, int sheet, string movieData)
         {
+            int res = 5 * ((list.Count * (list.Count + 1)) / list.Count);
             int med = list.Count / 2;
+            //int medi = med * 5;
             int size = list.Count;
             double Media4 = 5 * (total / list.Count);
             for (int i = 0; i < list.Count; i++)
@@ -61,23 +68,28 @@ namespace SeleniumBot
                 double pop = (list.Count - list[i].pop);
                 double place = (list.Count - list[i].place);
 
-                double scV = (list[i].vote * list[i].rt + Media4) / (list[i].vote + (Media4 / 5)) * 1.25;
-                double scP = (pop * list[i].rt + med) / (pop + (med / 5)) * 0.3;
+                double yy = (list[i].rt / (list[i].rt + (tot / size))) * list[i].rt / 2;
+                double yySq = Math.Pow(yy, yy);
+                double scV = Math.Pow((list[i].vote * list[i].rt + Media4) / (list[i].vote + (Media4 / 5)) / 4, (list[i].vote * list[i].rt + Media4) / (list[i].vote + (Media4 / 5)) / 4) * yySq / (tot / size);
+                double scP = Math.Pow((place * list[i].rt + res) / (place + (res / 5)) / 4, (place * list[i].rt + res) / (place + (res / 5)) / 4) * yySq / (tot * 1.618 / size);
 
                 Double y = (list[i].vote / (list[i].vote + (total / size))) * list[i].rt;
 
                 //Double p = Math.Pow(list[i].vote / (list[i].vote + (total / size)), 10 - y) * list[i].rt;
 
-                double yy = (list[i].rt / (list[i].rt + (tot / size))) * list[i].rt / 2;
                 // Double w = Math.Pow(list[i].rt / (list[i].rt + (tot / size)), 10 - yy) * list[i].rt;
 
                 //Double x = (pop / (med * pop)) * list[i].rt;
 
                 //Double r = (place / (med + place)) * list[i].rt;
                 //Double xx = Math.Pow(place / (med + place), 10 - r) * list[i].rt;
-
+                double pp = (list[i].vote * 10 + Media4) / (list[i].vote + (Media4 / 5)) / 10;
+                double cc = (place * 10 + res) / (place + (res / 5)) / 10;
                 //list[i].point = (y + r * 3 + x) / 6 + yy * 1;
-                list[i].point = ((scV + scP + yy) / 1.75);
+                double xfactor = (Math.Pow(pp, pp) + Math.Pow(cc, cc));
+                list[i].point = (scV + scP) + ((xfactor + Math.Pow((place / med) * (place / med), (place / med) * (place / med)) / 25.6) / 20);
+                if (scV < 0 || yy < 1 || scP < 0) list[i].point = 0;
+
 
 
                 //   (list[i].rt * Math.Log(list[i].rt) + Math.Log(list[i].rt)) +
@@ -109,7 +121,7 @@ namespace SeleniumBot
 
         }
 
-        public void read(int i, string val, string val2, List<Picture> list, int restric)
+        public void read(int i, string val, string val2, List<Picture> list, int restric, string movieData)
         {
             CultureInfo usa = new CultureInfo("en-US");
             driver.FindElement(By.CssSelector("body")).SendKeys(Keys.Control + "t");
@@ -125,6 +137,19 @@ namespace SeleniumBot
             ReadOnlyCollection<IWebElement> vote = driver.FindElements(By.XPath("//*[@id=\"main\"]/div/div[3]/div/div/div[3]/p[4]/span[2]"));
             ReadOnlyCollection<IWebElement> place = driver.FindElements(By.XPath("//*[@id=\"main\"]/div/div[3]/div/div/div[3]/h3/span[1]"));
             ReadOnlyCollection<IWebElement> rt = driver.FindElements(By.XPath("//*[@id=\"main\"]/div/div[3]/div/div/div[3]/div/div[1]/strong"));
+            ReadOnlyCollection<IWebElement> meta = driver.FindElements(By.XPath("//*[@id=\"main\"]/div/div[3]/div/div/div[3]/div/div[3]/span"));
+            List<int> Escape = new List<int>();
+            /*if (movieData == "1")
+            {
+                for (int e = 0; e < 50; ++e)
+                {
+                    int m = e + 1;
+                    if (driver.FindElements(By.XPath("//*[@id=\"main\"]/div/div[3]/div/div[" + m + "]/div[3]/div/div[3]/span")).Count == 0)
+                    {
+                        Escape.Add(e);
+                    }
+                }
+            }*/
             //ReadOnlyCollection<IWebElement> path = driver.FindElements(By.XPath("//*[@id=\"main\"]/div/div[2]/div[2]/div"));
             if (lines.Count != 0 && restric <= lines.Count)
             {
@@ -141,16 +166,16 @@ namespace SeleniumBot
                     i = 1;
                 }
                 driver.FindElement(By.CssSelector("body")).SendKeys(Keys.Control + "w");
-                read(i, val, val2, list, restric);
+                read(i, val, val2, list, restric, movieData);
             }
             else
             {
                 if (title.Count != 0)
                 {
                     driver.FindElement(By.CssSelector("body")).SendKeys(Keys.Control + "w");
-                    calculater(title, vote, place, rt, usa, list);
+                    calculater(title, vote, place, rt, meta, usa, list, movieData, Escape);
                     i = i + 50;
-                    read(i, val, val2, list, restric);
+                    read(i, val, val2, list, restric, movieData);
 
                 }
             }
@@ -160,11 +185,20 @@ namespace SeleniumBot
         }
 
         public void calculater(ReadOnlyCollection<IWebElement> title, ReadOnlyCollection<IWebElement> vote,
-        ReadOnlyCollection<IWebElement> place, ReadOnlyCollection<IWebElement> rt, CultureInfo usa, List<Picture> list)
+        ReadOnlyCollection<IWebElement> place, ReadOnlyCollection<IWebElement> rt, ReadOnlyCollection<IWebElement> meta, CultureInfo usa, List<Picture> list, string movieData, List<int> Escape)
         {
+            int m = 0;
             for (int i = 0; i < rt.Count; i++)
             {
+                double metaScore = Convert.ToDouble(float.Parse(rt[i].Text, usa)) / 13.75;
                 if (not.Contains(title[i].Text)) continue;
+
+                /*if (movieData == "1" && !Escape.Contains(i) && m < meta.Count)
+                {
+                    metaScore = Convert.ToDouble(float.Parse(meta[m].Text, usa)) / 10;
+                    m++;
+                }*/
+
                 double vt = 0;
 
                 if (vote[i].Text.Length >= 4)
@@ -176,12 +210,23 @@ namespace SeleniumBot
                     vt = Convert.ToDouble(float.Parse(vote[i].Text, usa));
                 }
 
+
+                string t = place[i].Text.Replace(".", ",");
+
                 total = total + vt;
                 tot = tot + Convert.ToDouble(rt[i].Text, usa) / 10;
-
+                /*if(movieData == "1") {
+                    Picture picture = new Picture(Convert.ToString(title[i].Text), vt,
+ Convert.ToDouble(float.Parse(t, usa)), Convert.ToDouble(float.Parse(rt[i].Text, usa)) / 10, metaScore);
+                    list.Insert(list.Count, picture);
+                }
+                else
+                {*/
                 Picture picture = new Picture(Convert.ToString(title[i].Text), vt,
-                    Convert.ToDouble(float.Parse(place[i].Text, usa)), Convert.ToDouble(float.Parse(rt[i].Text, usa)) / 10);
+                Convert.ToDouble(float.Parse(t, usa)), Convert.ToDouble(float.Parse(rt[i].Text, usa)) / 10, 0);
                 list.Insert(list.Count, picture);
+                //}
+
 
                 for (int j = list.Count - 1; j > 0; j--)
                 {
