@@ -14,7 +14,7 @@ dotnet build
 dotnet run
 ```
 
-- Enter the integer/URL text it asks for, then (optionally) pipe in or type result-page URLs to exclude, end with Ctrl-D.
+- The first prompt ("Enter integer after page=") is used as the base search URL (`val2 + "&start=" + n`), so give a full IMDb search URL. It then reads stdin until EOF (Ctrl-D); any lines are treated as extra search URLs whose titles are excluded.
 - It writes into `Selenium.xlsx` in the current folder; set `SELENIUMBOT_XLSX` to use another existing workbook.
 
 ## Status
