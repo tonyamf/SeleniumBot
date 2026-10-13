@@ -1,31 +1,27 @@
-﻿using Microsoft.Office.Interop.Excel;
+using ClosedXML.Excel;
 using System;
-using _Excel = Microsoft.Office.Interop.Excel;
 
 namespace SeleniumBot
 {
+    // Writes cells to an existing .xlsx file (was Microsoft.Office.Interop.Excel, which needs Windows + Office).
     class Excel
     {
         string path = "";
-        _Application excel = new _Excel.Application();
-        Workbook wb;
-        Worksheet ws;
+        XLWorkbook wb;
+        IXLWorksheet ws;
         public Excel(String path, int Sheet)
         {
             this.path = path;
-            excel.Visible = true;
-
-            wb = excel.Workbooks.Open(path, 0, false, 5, "", "", false,
-                XlPlatform.xlWindows, "", true, false, 0, true, false, false);
-            ws = wb.Worksheets[Sheet];
+            wb = new XLWorkbook(path);
+            ws = wb.Worksheet(Sheet);
         }
         public void Write(int i, int j, string s)
         {
-            ws.Cells[i, j].Value2 = s;
+            ws.Cell(i, j).Value = s;
         }
         public void Writeint(int i, int j, double s)
         {
-            ws.Cells[i, j].Value2 = s;
+            ws.Cell(i, j).Value = s;
         }
 
         public void save()

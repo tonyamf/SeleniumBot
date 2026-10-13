@@ -1,4 +1,3 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
@@ -131,7 +130,7 @@ namespace SeleniumBot
             }
             list.Sort((x, y) => y.point.CompareTo(x.point));
 
-            Excel excel = new Excel(@"C:\Users\Antonio franco\Documents\bot\Selenium.xlsx", 1);
+            Excel excel = new Excel(Environment.GetEnvironmentVariable("SELENIUMBOT_XLSX") ?? "Selenium.xlsx", 1);
             excel.Write(1, 1, "Title");
             excel.Write(1, 2, "Rating");
             excel.Write(1, 3, "Vote");
